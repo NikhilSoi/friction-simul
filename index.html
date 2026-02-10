@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Friction Hunter Simulation</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #F3F4F6;
+        }
+        .gradient-text {
+            background: linear-gradient(135deg, #4C1D95, #DB2777);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #4C1D95 0%, #DB2777 100%);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(219, 39, 119, 0.3);
+        }
+        .option-card {
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        .option-card:hover {
+            border-color: #4C1D95;
+            background-color: #F5F3FF;
+        }
+        .option-card.selected {
+            background-color: #4C1D95;
+            color: white;
+            border-color: #4C1D95;
+        }
+        .option-card.correct {
+            background-color: #10B981; /* Green */
+            color: white;
+            border-color: #10B981;
+        }
+        .option-card.incorrect {
+            background-color: #EF4444; /* Red */
+            color: white;
+            border-color: #EF4444;
+        }
+        /* Animation Classes */
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-4">
+
+    <!-- Game Container -->
+    <div class="w-full max-w-3xl bg-white rounded-2xl shadow-2xl overflow-hidden min-h-[600px] flex flex-col relative">
+        
+        <!-- Header -->
+        <header class="bg-white border-b border-gray-100 p-6 flex justify-between items-center z-10">
+            <div class="flex items-center space-x-2">
+                <i class="fas fa-search-location text-purple-700 text-xl"></i>
+                <h1 class="font-bold text-gray-800 tracking-tight">Friction Hunter <span class="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full ml-2">Student Edition</span></h1>
+            </div>
+            <div id="score-display" class="hidden font-bold text-gray-600">
+                Score: <span id="current-score" class="text-pink-600">0</span>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <main id="game-content" class="flex-grow p-8 flex flex-col justify-center items-center relative">
+            
+            <!-- VIEW: START SCREEN -->
+            <div id="view-start" class="text-center max-w-lg mx-auto fade-in">
+                <div class="w-24 h-24 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <i class="fas fa-user-secret text-4xl text-purple-600"></i>
+                </div>
+                <h2 class="text-3xl font-bold mb-4 text-gray-800">Welcome, Junior Auditor.</h2>
+                <p class="text-gray-600 mb-8 leading-relaxed">
+                    Your mission is to analyze 5 customer scenarios. In each scenario, a user is stuck. You must identify the <strong>Type of Friction</strong> and choose the <strong>Correct Fix</strong>.
+                </p>
+                <button onclick="game.start()" class="btn-primary text-white font-bold py-4 px-10 rounded-full text-lg shadow-lg flex items-center justify-center mx-auto space-x-2">
+                    <span>Start Simulation</span>
+                    <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
+
+            <!-- VIEW: GAMEPLAY -->
+            <div id="view-game" class="w-full hidden fade-in">
+                <!-- Progress Bar -->
+                <div class="w-full bg-gray-200 rounded-full h-2 mb-8">
+                    <div id="progress-bar" class="bg-gradient-to-r from-purple-500 to-pink-500 h-2 rounded-full" style="width: 0%"></div>
+                </div>
+
+                <!-- Scenario Section -->
+                <div class="mb-8">
+                    <span class="text-xs font-bold tracking-wider text-purple-500 uppercase mb-2 block">Scenario <span id="scenario-number">1</span>/5</span>
+                    <h3 id="scenario-title" class="text-2xl font-bold text-gray-800 mb-4">The Case of the Endless Scroll</h3>
+                    <div class="bg-gray-50 border-l-4 border-purple-500 p-6 rounded-r-lg shadow-sm">
+                        <p id="scenario-desc" class="text-lg text-gray-700 italic">"I clicked the ad for the '50% Off' sneakers, but when I landed on the site, I just saw the homepage with hundreds of random shoes. I couldn't find the sale items, so I left."</p>
+                    </div>
+                </div>
+
+                <!-- Phase 1: Identify Type -->
+                <div id="phase-type" class="mb-6">
+                    <p class="font-bold text-gray-600 mb-4 flex items-center"><i class="fas fa-question-circle mr-2"></i> What type of friction is this?</p>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <button onclick="game.checkType('Cognitive')" class="option-card p-4 rounded-xl border-2 border-gray-200 text-center font-bold text-gray-700">
+                            <i class="fas fa-brain block text-2xl mb-2 text-pink-500"></i>
+                            Cognitive
+                        </button>
+                        <button onclick="game.checkType('Emotional')" class="option-card p-4 rounded-xl border-2 border-gray-200 text-center font-bold text-gray-700">
+                            <i class="fas fa-heart-broken block text-2xl mb-2 text-cyan-500"></i>
+                            Emotional
+                        </button>
+                        <button onclick="game.checkType('Interaction')" class="option-card p-4 rounded-xl border-2 border-gray-200 text-center font-bold text-gray-700">
+                            <i class="fas fa-hand-pointer block text-2xl mb-2 text-purple-500"></i>
+                            Interaction
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Phase 2: Identify Fix (Hidden initially) -->
+                <div id="phase-fix" class="hidden mb-6">
+                    <p class="font-bold text-gray-600 mb-4 flex items-center"><i class="fas fa-tools mr-2"></i> How would you fix it?</p>
+                    <div id="fix-options" class="grid grid-cols-1 gap-3">
+                        <!-- Fix buttons injected via JS -->
+                    </div>
+                </div>
+
+                <!-- Feedback (Hidden initially) -->
+                <div id="feedback-area" class="hidden bg-gray-100 p-4 rounded-lg text-center mb-6">
+                    <p id="feedback-text" class="font-bold"></p>
+                    <button onclick="game.nextScenario()" class="mt-4 bg-gray-800 text-white px-6 py-2 rounded-lg hover:bg-gray-700 transition">Next Scenario</button>
+                </div>
+
+            </div>
+
+            <!-- VIEW: END SCREEN -->
+            <div id="view-end" class="text-center w-full hidden fade-in">
+                <div id="final-badge" class="w-32 h-32 mx-auto rounded-full flex items-center justify-center text-5xl mb-6 shadow-xl text-white bg-gradient-to-br from-yellow-400 to-orange-500">
+                    🏆
+                </div>
+                <h2 class="text-4xl font-bold text-gray-800 mb-2">Audit Complete!</h2>
+                <p class="text-xl text-gray-600 mb-8">You scored <span id="final-score" class="font-bold text-purple-600">0</span>/10</p>
+                
+                <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-inner max-w-md mx-auto mb-8">
+                    <p class="uppercase text-xs font-bold text-gray-400 tracking-widest mb-2">Rank Achieved</p>
+                    <h3 id="rank-title" class="text-2xl font-bold gradient-text">Conversion Hero</h3>
+                    <p id="rank-desc" class="text-sm text-gray-500 mt-2">You spot friction from a mile away. CMO material.</p>
+                </div>
+
+                <button onclick="location.reload()" class="text-gray-500 hover:text-purple-600 underline font-medium">Play Again</button>
+            </div>
+
+        </main>
+        
+        <!-- Footer -->
+        <footer class="bg-gray-50 p-4 text-center text-xs text-gray-400 border-t border-gray-100">
+            Friction Hunter Sim v1.0 • Built for Marketing Students
+        </footer>
+    </div>
+
+    <!-- Game Logic -->
+    <script>
+        const scenarios = [
+            {
+                id: 1,
+                title: "The Case of the Missing Promise",
+                desc: "A user clicks an ad for '50% Off Running Shoes'. They land on the generic Homepage showing hiking boots and tents. They leave immediately.",
+                type: "Cognitive", // Mental load: "Where is the thing I clicked?"
+                fixes: [
+                    { text: "Make the homepage load faster.", correct: false },
+                    { text: "Send traffic to a dedicated Landing Page showing only 50% off shoes.", correct: true },
+                    { text: "Add a chatbot to the homepage.", correct: false }
+                ],
+                explanation: "Correct! This is a 'Promise Match' failure. The user had to think too hard to find what was promised. Sending them to a specific LP removes that cognitive load."
+            },
+            {
+                id: 2,
+                title: "The Checkout Wall",
+                desc: "A user adds a $20 item to their cart. At checkout, before they can see shipping costs, a popup appears: 'Create an Account to Continue'. They abandon the cart.",
+                type: "Interaction", // Interaction barrier (or could be argued Process, but forcing extra clicks is Interaction/Barrier)
+                fixes: [
+                    { text: "Enable 'Guest Checkout' so they can buy without an account.", correct: true },
+                    { text: "Change the button color to green.", correct: false },
+                    { text: "Add more security badges to the popup.", correct: false }
+                ],
+                explanation: "Spot on! Forced registration is a massive interaction barrier (and a conversion killer). Guest Checkout removes the friction of creating a password."
+            },
+            {
+                id: 3,
+                title: "The Jargon Jungle",
+                desc: "A user is reading a pricing page for software. The features list says: 'Utilizes asynchronous API webhooks for dynamic throughput.' The user is a small business owner, not a dev. They close the tab.",
+                type: "Cognitive", // Confusion/Mental effort
+                fixes: [
+                    { text: "Lower the price.", correct: false },
+                    { text: "Rewrite copy to focus on benefits: 'Connects your apps automatically.'", correct: true },
+                    { text: "Add a video showing the API documentation.", correct: false }
+                ],
+                explanation: "Exactly. This is Cognitive Friction caused by jargon. The user couldn't understand the value proposition quickly."
+            },
+            {
+                id: 4,
+                title: "The Sketchy Payment",
+                desc: "A user is ready to pay. The credit card form looks old, the design doesn't match the rest of the site, and there is no padlock icon or SSL badge visible.",
+                type: "Emotional", // Fear/Trust
+                fixes: [
+                    { text: "Reduce the number of form fields.", correct: false },
+                    { text: "Modernize the UI and add trust seals (Norton, Visa, Lock icon) near the input.", correct: true },
+                    { text: "Offer a discount code.", correct: false }
+                ],
+                explanation: "You got it. This is Emotional Friction—specifically anxiety about security. Trust signals reassure the user's emotional brain."
+            },
+            {
+                id: 5,
+                title: "The Form Marathon",
+                desc: "To download a simple PDF whitepaper, the user is asked to fill out a form with 12 fields, including 'Fax Number', 'Secondary Address', and 'Annual Revenue'.",
+                type: "Interaction", // Physical effort
+                fixes: [
+                    { text: "Remove all non-essential fields (ask only for Email/Name).", correct: true },
+                    { text: "Split the form into 3 pages.", correct: false },
+                    { text: "Add a progress bar.", correct: false }
+                ],
+                explanation: "Correct! Asking for too much info is Interaction Friction (effort). Reducing fields increases conversion rates dramatically."
+            }
+        ];
+
+        const game = {
+            state: {
+                currentIdx: 0,
+                score: 0,
+                currentPhase: 'start' // start, type, fix, feedback, end
+            },
+            
+            elements: {
+                viewStart: document.getElementById('view-start'),
+                viewGame: document.getElementById('view-game'),
+                viewEnd: document.getElementById('view-end'),
+                progressBar: document.getElementById('progress-bar'),
+                scenarioNum: document.getElementById('scenario-number'),
+                title: document.getElementById('scenario-title'),
+                desc: document.getElementById('scenario-desc'),
+                scoreDisplay: document.getElementById('score-display'),
+                scoreVal: document.getElementById('current-score'),
+                phaseType: document.getElementById('phase-type'),
+                phaseFix: document.getElementById('phase-fix'),
+                fixContainer: document.getElementById('fix-options'),
+                feedbackArea: document.getElementById('feedback-area'),
+                feedbackText: document.getElementById('feedback-text'),
+                finalScore: document.getElementById('final-score'),
+                rankTitle: document.getElementById('rank-title'),
+                rankDesc: document.getElementById('rank-desc'),
+                finalBadge: document.getElementById('final-badge')
+            },
+
+            start: function() {
+                this.state.currentIdx = 0;
+                this.state.score = 0;
+                this.elements.viewStart.classList.add('hidden');
+                this.elements.viewGame.classList.remove('hidden');
+                this.elements.scoreDisplay.classList.remove('hidden');
+                this.renderScenario();
+            },
+
+            renderScenario: function() {
+                const scenario = scenarios[this.state.currentIdx];
+                
+                // Reset UI
+                this.elements.phaseType.classList.remove('hidden');
+                this.elements.phaseFix.classList.add('hidden');
+                this.elements.feedbackArea.classList.add('hidden');
+                this.elements.scoreVal.innerText = this.state.score;
+                
+                // Reset Buttons
+                document.querySelectorAll('.option-card').forEach(btn => {
+                    btn.classList.remove('selected', 'correct', 'incorrect');
+                    btn.disabled = false;
+                });
+
+                // Update Content
+                this.elements.scenarioNum.innerText = this.state.currentIdx + 1;
+                this.elements.title.innerText = scenario.title;
+                this.elements.desc.innerText = `"${scenario.desc}"`;
+                
+                // Update Progress
+                const progress = ((this.state.currentIdx) / scenarios.length) * 100;
+                this.elements.progressBar.style.width = `${progress}%`;
+            },
+
+            checkType: function(selectedType) {
+                const scenario = scenarios[this.state.currentIdx];
+                
+                // Visual feedback on buttons
+                // Ideally we highlight the correct one if they missed it, but for simplicity let's just move on if correct
+                // or tell them if wrong.
+                
+                if (selectedType === scenario.type) {
+                    this.state.score++;
+                    this.elements.scoreVal.innerText = this.state.score;
+                    // Move to Phase 2
+                    this.renderFixOptions(scenario);
+                } else {
+                    // Wrong type selected
+                    alert(`Not quite! This is actually ${scenario.type} friction. Let's try to fix it anyway.`);
+                    this.renderFixOptions(scenario);
+                }
+            },
+
+            renderFixOptions: function(scenario) {
+                this.elements.phaseType.classList.add('hidden');
+                this.elements.phaseFix.classList.remove('hidden');
+                this.elements.fixContainer.innerHTML = ''; // Clear old
+
+                scenario.fixes.forEach(fix => {
+                    const btn = document.createElement('button');
+                    btn.className = 'option-card p-4 rounded-xl border-2 border-gray-200 text-left font-medium text-gray-700 w-full hover:shadow-md transition';
+                    btn.innerHTML = `<span class="inline-block w-6 h-6 rounded-full border border-gray-300 mr-2"></span> ${fix.text}`;
+                    btn.onclick = () => this.checkFix(btn, fix.correct, scenario.explanation);
+                    this.elements.fixContainer.appendChild(btn);
+                });
+            },
+
+            checkFix: function(btnElement, isCorrect, explanation) {
+                // Disable all buttons
+                const allBtns = this.elements.fixContainer.querySelectorAll('button');
+                allBtns.forEach(b => b.disabled = true);
+
+                if (isCorrect) {
+                    this.state.score++;
+                    btnElement.classList.add('correct');
+                    btnElement.querySelector('span').innerHTML = '✓';
+                    btnElement.querySelector('span').className = 'inline-block w-6 h-6 rounded-full bg-white text-green-500 font-bold text-center leading-6 mr-2';
+                    this.elements.feedbackText.innerHTML = `<span class="text-green-600 block text-lg mb-1">Excellent Work!</span> ${explanation}`;
+                } else {
+                    btnElement.classList.add('incorrect');
+                    this.elements.feedbackText.innerHTML = `<span class="text-red-500 block text-lg mb-1">Oops.</span> That fix might not solve the core problem. ${explanation}`;
+                }
+
+                this.elements.scoreVal.innerText = this.state.score;
+                this.elements.feedbackArea.classList.remove('hidden');
+                this.elements.feedbackArea.classList.add('fade-in');
+            },
+
+            nextScenario: function() {
+                this.state.currentIdx++;
+                if (this.state.currentIdx < scenarios.length) {
+                    this.renderScenario();
+                } else {
+                    this.endGame();
+                }
+            },
+
+            endGame: function() {
+                this.elements.viewGame.classList.add('hidden');
+                this.elements.viewEnd.classList.remove('hidden');
+                this.elements.finalScore.innerText = this.state.score;
+
+                let rank = "Intern Auditor";
+                let desc = "You're just starting out. Review the Friction Guide and try again!";
+                let icon = "📝";
+                let color = "bg-gray-400";
+
+                if (this.state.score >= 8) {
+                    rank = "Conversion Hero";
+                    desc = "You spot friction from a mile away. CMO material.";
+                    icon = "🏆";
+                    color = "bg-gradient-to-br from-yellow-400 to-orange-500";
+                } else if (this.state.score >= 5) {
+                    rank = "Optimization Specialist";
+                    desc = "Good eye. You caught most of the issues.";
+                    icon = "🥈";
+                    color = "bg-gradient-to-br from-gray-300 to-gray-500";
+                }
+
+                this.elements.rankTitle.innerText = rank;
+                this.elements.rankDesc.innerText = desc;
+                this.elements.finalBadge.innerText = icon;
+                this.elements.finalBadge.className = `w-32 h-32 mx-auto rounded-full flex items-center justify-center text-5xl mb-6 shadow-xl text-white ${color}`;
+            }
+        };
+    </script>
+</body>
+</html>
